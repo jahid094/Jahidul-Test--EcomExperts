@@ -49,10 +49,10 @@
 
     {% comment %} Capturing the corresponding image by matching the option name with image alt {% endcomment %}
     {%- capture optionImage -%}
-      {% assign optionValue = value | downcase | strip %}
+      {%- assign optionValue = value | downcase | strip -%}
       {%- for img in product.images -%}
-        {% assign imageAlt = img.alt | downcase | strip %}
-        {% if optionValue == imageAlt %}
+        {%- assign imageAlt = img.alt | downcase | strip -%}
+        {%- if optionValue == imageAlt -%}
           <img
             src="{{ img | image_url: width: 50 }}"
             alt="{{ img.alt | escape }}"
