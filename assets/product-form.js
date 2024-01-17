@@ -16,7 +16,7 @@ if (!customElements.get('product-form')) {
         this.hideErrors = this.dataset.hideErrors === 'true';
       }
 
-      onSubmitHandler(evt) {
+      async onSubmitHandler(evt) {
         evt.preventDefault();
         if (this.submitButton.getAttribute('aria-disabled') === 'true') return;
 
@@ -41,7 +41,7 @@ if (!customElements.get('product-form')) {
         }
         config.body = formData;
 
-        fetch(`${routes.cart_add_url}`, config)
+        await fetch(`${routes.cart_add_url}`, config)
           .then((response) => response.json())
           .then((response) => {
             if (response.status) {
@@ -97,6 +97,64 @@ if (!customElements.get('product-form')) {
             if (!this.error) this.submitButton.removeAttribute('aria-disabled');
             this.querySelector('.loading__spinner').classList.add('hidden');
           });
+
+          await this.bundleProductATC();
+      }
+
+      // Function for adding bundle product to the cart for the corresponding product
+      async bundleProductATC(){
+        let isWinterJacketBundleProductExists = false;
+        let mostRecentCartItemId = "";
+
+        // Check if bundle product are already there in cart and getting the most recent cart product
+        await fetch(window.Shopify.routes.root + 'cart.js')
+          .then(response => {
+            return response.json();
+          })
+          .then((response) => {
+            // console.log(response, "cart data response");
+            mostRecentCartItemId = response?.items[0]?.variant_id;
+            for(const item of response?.items){
+              if (item.variant_id == 44468771094772){
+                isWinterJacketBundleProductExists = true;
+              }
+            }
+          })
+          .catch((error) => {
+            console.error('Error:', error);
+          });
+
+
+        // if winter jacket bundle product is not there on the cart and Added the Black&Medium variant, then bundle product will be added to cart. 
+        if (!isWinterJacketBundleProductExists && mostRecentCartItemId == "44475510391028") {
+          // console.log(isWinterJacketBundleProductExists, "isWinterJacketBundleProductExists");
+          // console.log(mostRecentCartItemId, "mostRecentCartItemId");
+
+          let formData = {
+            'items': [{
+              'id': '44468771094772',
+              'quantity': 1
+            }]
+          };
+
+          // adding the bundle product here
+          await fetch(window.Shopify.routes.root + 'cart/add.js', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+          })
+          .then(response => {
+            return response.json();
+          })
+          .then(response => {
+            // console.log(response, "Product added to cart. ");
+          })
+          .catch((error) => {
+            console.error('Error:', error);
+          });
+        }
       }
 
       handleErrorMessage(errorMessage = false) {
