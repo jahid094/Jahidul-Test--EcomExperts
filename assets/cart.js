@@ -5,8 +5,85 @@ class CartRemoveButton extends HTMLElement {
     this.addEventListener('click', (event) => {
       event.preventDefault();
       const cartItems = this.closest('cart-items') || this.closest('cart-drawer-items');
-      cartItems.updateQuantity(this.dataset.index, 0);
+      // cartItems.updateQuantity(this.dataset.index, 0);
+      this.removeItemFromCart(cartItems, this.dataset.index, this.dataset.variantId);
     });
+  }
+
+  async removeItemFromCart(cartItems, cartIndex, variantId){
+    if (variantId != 44475510391028){
+      // If It is not Black & Medium variant of handbag, then removing it from cart
+      cartItems.updateQuantity(cartIndex, 0);
+    }else{
+      let isWinterJacketBundleProductExists = false;
+      let cartAllItems = this.getCartItems();
+      
+
+      // checking if there is already a winter jacket bundle product in cart
+      await cartAllItems.then((value)=> {
+        for (const item of value) {
+          if (item.variant_id == 44468771094772) {
+            isWinterJacketBundleProductExists = true;
+          }
+        }
+      })
+
+      // console.log(isWinterJacketBundleProductExists, "isWinterJacketBundleProductExists");
+
+      // if winter jacket bundle product exists, then remove both of them
+      if (isWinterJacketBundleProductExists){
+        let formData = {
+          'id': '44468771094772',
+          'quantity': 0
+        };
+
+        // removing the winter jacket bundle product here
+        await fetch(window.Shopify.routes.root + 'cart/change.js', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        })
+          .then(response => {
+            return response.json();
+          })
+          .then(response => {
+            // console.log(response, "winter jacket bundle product removed from cart. ");
+            response?.token ? cartItems.updateQuantity(cartIndex - 1, 0) : cartItems.updateQuantity(cartIndex, 0);
+          })
+          .catch((error) => {
+            cartItems.updateQuantity(cartIndex, 0);
+            console.error('Error:', error);
+          });
+      }else{
+        // if winter jacket bundle product does not exists somehow, then remove only remove the current variant
+        cartItems.updateQuantity(cartIndex, 0)
+      }
+    }
+  }
+
+  // getting all cartItems 
+  async getCartItems(){
+    let cartItems = [];
+    await fetch(window.Shopify.routes.root + 'cart.js')
+      .then(response => {
+        return response.json();
+      })
+      .then((response) => {
+        if(response?.items?.length > 0){
+          // console.log(response, "response from getCartItems");
+          cartItems = response?.items;
+        }else{
+          cartItems = [];
+        }
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+        cartItems = [];
+      });
+
+    return cartItems;
   }
 }
 
