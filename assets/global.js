@@ -948,6 +948,10 @@ customElements.define('slideshow-component', SlideshowComponent);
 class VariantSelects extends HTMLElement {
   constructor() {
     super();
+
+    // Getting the option value when reload the page or first visit
+    this.updateOptions();
+
     this.addEventListener('change', this.onVariantChange);
   }
 
@@ -959,12 +963,25 @@ class VariantSelects extends HTMLElement {
     this.removeErrorMessage();
     this.updateVariantStatuses();
 
+    // console.log(this.options, "this.options inside on variant change");
+
+    // Making the payment buttons disabled when option value is "Unselected"
+    if(this.options.includes("Unselected")){
+      this.toggleAddButton(true, '', true);
+
+      this.updateMedia();
+      this.updateVariantInput();
+      this.updateShareUrl();
+      return;
+    }
+
     if (!this.currentVariant) {
       this.toggleAddButton(true, '', true);
       this.setUnavailable();
     } else {
       this.updateMedia();
-      this.updateURL();
+
+      // this.updateURL(); // Removing variant id from url because on reload we have to show the first option
       this.updateVariantInput();
       this.renderProductInfo();
       this.updateShareUrl();
@@ -1217,9 +1234,23 @@ class VariantRadios extends VariantSelects {
 
   updateOptions() {
     const fieldsets = Array.from(this.querySelectorAll('fieldset'));
-    this.options = fieldsets.map((fieldset) => {
+
+    // Getting the option value from radio button
+    let radiosOptionsValue = fieldsets.map((fieldset) => {
       return Array.from(fieldset.querySelectorAll('input')).find((radio) => radio.checked).value;
     });
+
+    // Getting the option value from select
+    let selectOptionValue = Array.from(this.querySelectorAll('select'), (select) => select.value);
+
+    // Merging both value to select the appropriate variant
+    this.options = radiosOptionsValue.concat(selectOptionValue);
+
+    if (this.options.includes("Unselected")) {
+      this.toggleAddButton(true, '', true);
+    }
+
+    // console.log(this.options, "*** this.options ****");
   }
 }
 

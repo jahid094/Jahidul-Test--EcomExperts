@@ -46,6 +46,25 @@
   -%}
 
   {%- if block.settings.picker_type == 'button' -%}
+
+    {% comment %} Capturing the corresponding image by matching the option name with image alt {% endcomment %}
+    {%- capture optionImage -%}
+      {% assign optionValue = value | downcase | strip %}
+      {%- for img in product.images -%}
+        {% assign imageAlt = img.alt | downcase | strip %}
+        {% if optionValue == imageAlt %}
+          <img
+            src="{{ img | image_url: width: 50 }}"
+            alt="{{ img.alt | escape }}"
+            loading="lazy"
+            width="50"
+            height="50"
+            data-media-id="{{ media.id }}"
+          >
+        {%- endif -%}
+      {%- endfor -%}
+    {%- endcapture -%}
+
     <input
       type="radio"
       id="{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}"
@@ -60,9 +79,13 @@
       {% endif %}
     >
     <label for="{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}">
+      {{ optionImage }}
+    </label>
+
+    {% comment %} <label for="{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}">
       {{ value -}}
       <span class="visually-hidden">{{ 'products.product.variant_sold_out_or_unavailable' | t }}</span>
-    </label>
+    </label> {% endcomment %}
   {%- elsif block.settings.picker_type == 'dropdown' -%}
     <option
       value="{{ value | escape }}"
